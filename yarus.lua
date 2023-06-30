@@ -238,6 +238,18 @@ wget.callbacks.get_urls = function(file, url, is_css, iri)
             ["X-DEVICE-ID"]="00000000-0000-0000-0000-000000000000"
           }
         })
+      elseif string.match(url_, "^https?://[^/]*cdnvideo%.ru/") then
+        local random_string = ""
+        for i=1,20 do
+          random_string = random_string .. string.char(math.random(97, 122))
+        end
+        print(random_string)
+        table.insert(urls, {
+          url=url_,
+          headers={
+            ["Extra"]=random_string,
+          }
+        })
       else
         table.insert(urls, { url=url_ })
       end
@@ -573,8 +585,13 @@ wget.callbacks.httploop_result = function(url, err, http_stat)
   if status_code == 0 or retry_url then
     io.stdout:write("Server returned bad response. ")
     io.stdout:flush()
+    local maxtries = 6
+    if string.match(url["url"], "^https?://api%.yarus%.ru/")
+      and status_code == 404 then
+      maxtries = 1
+    end
     tries = tries + 1
-    if tries > 6 then
+    if tries > maxtries then
       io.stdout:write(" Skipping.\n")
       io.stdout:flush()
       tries = 0
